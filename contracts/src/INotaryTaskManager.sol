@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
 
-interface IIncredibleSquaringTaskManager {
+interface INotaryTaskManager {
     // EVENTS
     event NewTaskCreated(uint32 indexed taskIndex, Task task);
 
@@ -25,9 +25,14 @@ interface IIncredibleSquaringTaskManager {
     );
 
     // STRUCTS
+    struct TLSNReq {
+        uint32 tlsnReqNumber;
+        bytes tlsnReqInfo;
+    }
+
     struct Task {
-        uint256 numberToBeSquared;
-        uint32 taskCreatedBlock;
+        TLSNReq tlsnReq; 
+        uint32 taskCreatedBlock; 
         // task submitter decides on the criteria for a task to be completed
         // note that this does not mean the task was "correctly" answered (i.e. the number was squared correctly)
         //      this is for the challenge logic to verify
@@ -44,7 +49,7 @@ interface IIncredibleSquaringTaskManager {
         // Can be obtained by the operator from the event NewTaskCreated.
         uint32 referenceTaskIndex;
         // This is just the response that the operator has to compute by itself.
-        uint256 numberSquared;
+        uint32 tlsnReqNumber;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.
@@ -58,7 +63,7 @@ interface IIncredibleSquaringTaskManager {
     // FUNCTIONS
     // NOTE: this function creates new task.
     function createNewTask(
-        uint256 numberToBeSquared,
+        TLSNReq calldata tlsnReq, 
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external;
@@ -66,13 +71,13 @@ interface IIncredibleSquaringTaskManager {
     /// @notice Returns the current 'taskNumber' for the middleware
     function taskNumber() external view returns (uint32);
 
-    // // NOTE: this function raises challenge to existing tasks.
-    function raiseAndResolveChallenge(
-        Task calldata task,
-        TaskResponse calldata taskResponse,
-        TaskResponseMetadata calldata taskResponseMetadata,
-        BN254.G1Point[] memory pubkeysOfNonSigningOperators
-    ) external;
+    // // // NOTE: this function raises challenge to existing tasks.
+    // function raiseAndResolveChallenge(
+    //     Task calldata task,
+    //     TaskResponse calldata taskResponse,
+    //     TaskResponseMetadata calldata taskResponseMetadata,
+    //     BN254.G1Point[] memory pubkeysOfNonSigningOperators
+    // ) external;
 
     /// @notice Returns the TASK_RESPONSE_WINDOW_BLOCK
     function getTaskResponseWindowBlock() external view returns (uint32);

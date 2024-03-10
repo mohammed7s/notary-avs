@@ -17,9 +17,9 @@ import {IndexRegistry} from "@eigenlayer-middleware/src/IndexRegistry.sol";
 import {StakeRegistry} from "@eigenlayer-middleware/src/StakeRegistry.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
-import {IncredibleSquaringServiceManager, IServiceManager} from "../src/IncredibleSquaringServiceManager.sol";
-import {IncredibleSquaringTaskManager} from "../src/IncredibleSquaringTaskManager.sol";
-import {IIncredibleSquaringTaskManager} from "../src/IIncredibleSquaringTaskManager.sol";
+import {NotaryServiceManager, IServiceManager} from "../src/NotaryServiceManager.sol";
+import {NotaryTaskManager} from "../src/NotaryTaskManager.sol";
+import {INotaryTaskManager} from "../src/INotaryTaskManager.sol";
 import "../src/ERC20Mock.sol";
 
 import {Utils} from "./utils/Utils.sol";
@@ -31,7 +31,7 @@ import "forge-std/console.sol";
 
 // # To deploy and verify our contract
 // forge script script/CredibleSquaringDeployer.s.sol:CredibleSquaringDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
-contract IncredibleSquaringDeployer is Script, Utils {
+contract NotaryDeployer is Script, Utils {
     // DEPLOYMENT CONSTANTS
     uint256 public constant QUORUM_THRESHOLD_PERCENTAGE = 100;
     uint32 public constant TASK_RESPONSE_WINDOW_BLOCK = 30;
@@ -48,8 +48,8 @@ contract IncredibleSquaringDeployer is Script, Utils {
     StrategyBaseTVLLimits public erc20MockStrategy;
 
     // Credible Squaring contracts
-    ProxyAdmin public incredibleSquaringProxyAdmin;
-    PauserRegistry public incredibleSquaringPauserReg;
+    ProxyAdmin public notaryProxyAdmin;
+    PauserRegistry public notaryPauserReg;
 
     regcoord.RegistryCoordinator public registryCoordinator;
     regcoord.IRegistryCoordinator public registryCoordinatorImplementation;
@@ -65,12 +65,12 @@ contract IncredibleSquaringDeployer is Script, Utils {
 
     OperatorStateRetriever public operatorStateRetriever;
 
-    IncredibleSquaringServiceManager public incredibleSquaringServiceManager;
-    IServiceManager public incredibleSquaringServiceManagerImplementation;
+    NotaryServiceManager public notaryServiceManager;
+    IServiceManager public notaryServiceManagerImplementation;
 
-    IncredibleSquaringTaskManager public incredibleSquaringTaskManager;
-    IIncredibleSquaringTaskManager
-        public incredibleSquaringTaskManagerImplementation;
+    NotaryTaskManager public notaryTaskManager;
+    INotaryTaskManager
+        public notaryTaskManagerImplementation;
 
     function run() external {
         // Eigenlayer contracts
@@ -159,7 +159,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
     function _deployCredibleSquaringContracts(
         IDelegationManager delegationManager,
         IStrategy strat,
-        address incredibleSquaringCommunityMultisig,
+        address notaryCommunityMultisig,
         address credibleSquaringPauser
     ) internal {
         // Adding this as a temporary fix to make the rest of the script work with a single strategy
@@ -168,16 +168,16 @@ contract IncredibleSquaringDeployer is Script, Utils {
         uint numStrategies = deployedStrategyArray.length;
 
         // deploy proxy admin for ability to upgrade proxy contracts
-        incredibleSquaringProxyAdmin = new ProxyAdmin();
+        notaryProxyAdmin = new ProxyAdmin();
 
         // deploy pauser registry
         {
             address[] memory pausers = new address[](2);
             pausers[0] = credibleSquaringPauser;
-            pausers[1] = incredibleSquaringCommunityMultisig;
-            incredibleSquaringPauserReg = new PauserRegistry(
+            pausers[1] = notaryCommunityMultisig;
+            notaryPauserReg = new PauserRegistry(
                 pausers,
-                incredibleSquaringCommunityMultisig
+                notaryCommunityMultisig
             );
         }
 
@@ -189,20 +189,20 @@ contract IncredibleSquaringDeployer is Script, Utils {
          * First, deploy upgradeable proxy contracts that **will point** to the implementations. Since the implementation contracts are
          * not yet deployed, we give these proxies an empty contract as the initial implementation, to act as if they have no code.
          */
-        incredibleSquaringServiceManager = IncredibleSquaringServiceManager(
+        notaryServiceManager = NotaryServiceManager(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(incredibleSquaringProxyAdmin),
+                    address(notaryProxyAdmin),
                     ""
                 )
             )
         );
-        incredibleSquaringTaskManager = IncredibleSquaringTaskManager(
+        notaryTaskManager = NotaryTaskManager(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(incredibleSquaringProxyAdmin),
+                    address(notaryProxyAdmin),
                     ""
                 )
             )
@@ -211,7 +211,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(incredibleSquaringProxyAdmin),
+                    address(notaryProxyAdmin),
                     ""
                 )
             )
@@ -220,7 +220,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(incredibleSquaringProxyAdmin),
+                    address(notaryProxyAdmin),
                     ""
                 )
             )
@@ -229,7 +229,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(incredibleSquaringProxyAdmin),
+                    address(notaryProxyAdmin),
                     ""
                 )
             )
@@ -238,7 +238,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
-                    address(incredibleSquaringProxyAdmin),
+                    address(notaryProxyAdmin),
                     ""
                 )
             )
@@ -253,7 +253,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 delegationManager
             );
 
-            incredibleSquaringProxyAdmin.upgrade(
+            notaryProxyAdmin.upgrade(
                 TransparentUpgradeableProxy(payable(address(stakeRegistry))),
                 address(stakeRegistryImplementation)
             );
@@ -262,7 +262,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 registryCoordinator
             );
 
-            incredibleSquaringProxyAdmin.upgrade(
+            notaryProxyAdmin.upgrade(
                 TransparentUpgradeableProxy(payable(address(blsApkRegistry))),
                 address(blsApkRegistryImplementation)
             );
@@ -271,14 +271,14 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 registryCoordinator
             );
 
-            incredibleSquaringProxyAdmin.upgrade(
+            notaryProxyAdmin.upgrade(
                 TransparentUpgradeableProxy(payable(address(indexRegistry))),
                 address(indexRegistryImplementation)
             );
         }
 
         registryCoordinatorImplementation = new regcoord.RegistryCoordinator(
-            incredibleSquaringServiceManager,
+            notaryServiceManager,
             regcoord.IStakeRegistry(address(stakeRegistry)),
             regcoord.IBLSApkRegistry(address(blsApkRegistry)),
             regcoord.IIndexRegistry(address(indexRegistry))
@@ -324,7 +324,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
                         });
                 }
             }
-            incredibleSquaringProxyAdmin.upgradeAndCall(
+            notaryProxyAdmin.upgradeAndCall(
                 TransparentUpgradeableProxy(
                     payable(address(registryCoordinator))
                 ),
@@ -332,10 +332,10 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 abi.encodeWithSelector(
                     regcoord.RegistryCoordinator.initialize.selector,
                     // we set churnApprover and ejector to communityMultisig because we don't need them
-                    incredibleSquaringCommunityMultisig,
-                    incredibleSquaringCommunityMultisig,
-                    incredibleSquaringCommunityMultisig,
-                    incredibleSquaringPauserReg,
+                    notaryCommunityMultisig,
+                    notaryCommunityMultisig,
+                    notaryCommunityMultisig,
+                    notaryPauserReg,
                     0, // 0 initialPausedStatus means everything unpaused
                     quorumsOperatorSetParams,
                     quorumsMinimumStake,
@@ -344,39 +344,39 @@ contract IncredibleSquaringDeployer is Script, Utils {
             );
         }
 
-        incredibleSquaringServiceManagerImplementation = new IncredibleSquaringServiceManager(
+        notaryServiceManagerImplementation = new NotaryServiceManager(
             delegationManager,
             registryCoordinator,
             stakeRegistry,
-            incredibleSquaringTaskManager
+            notaryTaskManager
         );
         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
-        incredibleSquaringProxyAdmin.upgradeAndCall(
+        notaryProxyAdmin.upgradeAndCall(
             TransparentUpgradeableProxy(
-                payable(address(incredibleSquaringServiceManager))
+                payable(address(notaryServiceManager))
             ),
-            address(incredibleSquaringServiceManagerImplementation),
+            address(notaryServiceManagerImplementation),
             abi.encodeWithSelector(
-                incredibleSquaringServiceManager.initialize.selector,
-                incredibleSquaringCommunityMultisig
+                notaryServiceManager.initialize.selector,
+                notaryCommunityMultisig
             )
         );
 
-        incredibleSquaringTaskManagerImplementation = new IncredibleSquaringTaskManager(
+        notaryTaskManagerImplementation = new NotaryTaskManager(
             registryCoordinator,
             TASK_RESPONSE_WINDOW_BLOCK
         );
 
         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
-        incredibleSquaringProxyAdmin.upgradeAndCall(
+        notaryProxyAdmin.upgradeAndCall(
             TransparentUpgradeableProxy(
-                payable(address(incredibleSquaringTaskManager))
+                payable(address(notaryTaskManager))
             ),
-            address(incredibleSquaringTaskManagerImplementation),
+            address(notaryTaskManagerImplementation),
             abi.encodeWithSelector(
-                incredibleSquaringTaskManager.initialize.selector,
-                incredibleSquaringPauserReg,
-                incredibleSquaringCommunityMultisig,
+                notaryTaskManager.initialize.selector,
+                notaryPauserReg,
+                notaryCommunityMultisig,
                 AGGREGATOR_ADDR,
                 TASK_GENERATOR_ADDR
             )
@@ -399,22 +399,22 @@ contract IncredibleSquaringDeployer is Script, Utils {
         vm.serializeAddress(
             deployed_addresses,
             "credibleSquaringServiceManager",
-            address(incredibleSquaringServiceManager)
+            address(notaryServiceManager)
         );
         vm.serializeAddress(
             deployed_addresses,
             "credibleSquaringServiceManagerImplementation",
-            address(incredibleSquaringServiceManagerImplementation)
+            address(notaryServiceManagerImplementation)
         );
         vm.serializeAddress(
             deployed_addresses,
             "credibleSquaringTaskManager",
-            address(incredibleSquaringTaskManager)
+            address(notaryTaskManager)
         );
         vm.serializeAddress(
             deployed_addresses,
             "credibleSquaringTaskManagerImplementation",
-            address(incredibleSquaringTaskManagerImplementation)
+            address(notaryTaskManagerImplementation)
         );
         vm.serializeAddress(
             deployed_addresses,
