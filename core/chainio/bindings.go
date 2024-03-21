@@ -15,8 +15,8 @@ import (
 )
 
 type AvsManagersBindings struct {
-	TaskManager    *cstaskmanager.ContractIncredibleSquaringTaskManager
-	ServiceManager *csservicemanager.ContractIncredibleSquaringServiceManager
+	TaskManager    *cstaskmanager.ContractNotaryTaskManager
+	ServiceManager *csservicemanager.ContractNotaryServiceManager
 	ethClient      eth.EthClient
 	logger         logging.Logger
 }
@@ -30,7 +30,7 @@ func NewAvsManagersBindings(registryCoordinatorAddr, operatorStateRetrieverAddr 
 	if err != nil {
 		return nil, err
 	}
-	contractServiceManager, err := csservicemanager.NewContractIncredibleSquaringServiceManager(serviceManagerAddr, ethclient)
+	contractServiceManager, err := csservicemanager.NewContractNotaryServiceManager(serviceManagerAddr, ethclient)
 	if err != nil {
 		logger.Error("Failed to fetch IServiceManager contract", "err", err)
 		return nil, err
@@ -41,7 +41,7 @@ func NewAvsManagersBindings(registryCoordinatorAddr, operatorStateRetrieverAddr 
 		logger.Error("Failed to fetch TaskManager address", "err", err)
 		return nil, err
 	}
-	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(taskManagerAddr, ethclient)
+	contractTaskManager, err := cstaskmanager.NewContractNotaryTaskManager(taskManagerAddr, ethclient)
 	if err != nil {
 		logger.Error("Failed to fetch IIncredibleSquaringTaskManager contract", "err", err)
 		return nil, err
