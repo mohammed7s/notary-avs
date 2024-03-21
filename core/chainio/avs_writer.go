@@ -2,7 +2,6 @@ package chainio
 
 import (
 	"context"
-	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -21,7 +20,7 @@ type AvsWriterer interface {
 
 	SendNewTaskNumberToSquare(
 		ctx context.Context,
-		numToSquare *big.Int,
+		tlsnReq cstaskmanager.INotaryTaskManagerTLSNReq,
 		quorumThresholdPercentage uint32,
 		quorumNumbers []byte,
 	) (cstaskmanager.INotaryTaskManagerTask, uint32, error)
@@ -75,13 +74,13 @@ func NewAvsWriter(avsRegistryWriter avsregistry.AvsRegistryWriter, avsServiceBin
 }
 
 // returns the tx receipt, as well as the task index (which it gets from parsing the tx receipt logs)
-func (w *AvsWriter) SendNewTaskNumberToSquare(ctx context.Context, numToSquare *big.Int, quorumThresholdPercentage uint32, quorumNumbers []byte) (cstaskmanager.INotaryTaskManagerTask, uint32, error) {
+func (w *AvsWriter) SendNewTaskNumberToSquare(ctx context.Context, tlsnReq cstaskmanager.INotaryTaskManagerTLSNReq, quorumThresholdPercentage uint32, quorumNumbers []byte) (cstaskmanager.INotaryTaskManagerTask, uint32, error) {
 	txOpts, err := w.TxMgr.GetNoSendTxOpts()
 	if err != nil {
 		w.logger.Errorf("Error getting tx opts")
 		return cstaskmanager.INotaryTaskManagerTask{}, 0, err
 	}
-	tx, err := w.AvsContractBindings.TaskManager.CreateNewTask(txOpts, numToSquare, quorumThresholdPercentage, quorumNumbers)
+	tx, err := w.AvsContractBindings.TaskManager.CreateNewTask(txOpts, tlsnReq, quorumThresholdPercentage, quorumNumbers)
 	if err != nil {
 		w.logger.Errorf("Error assembling CreateNewTask tx")
 		return cstaskmanager.INotaryTaskManagerTask{}, 0, err
@@ -122,6 +121,7 @@ func (w *AvsWriter) SendAggregatedResponse(
 	return receipt, nil
 }
 
+// commented this function out for now
 func (w *AvsWriter) RaiseChallenge(
 	ctx context.Context,
 	task cstaskmanager.INotaryTaskManagerTask,
@@ -129,20 +129,21 @@ func (w *AvsWriter) RaiseChallenge(
 	taskResponseMetadata cstaskmanager.INotaryTaskManagerTaskResponseMetadata,
 	pubkeysOfNonSigningOperators []cstaskmanager.BN254G1Point,
 ) (*types.Receipt, error) {
-	txOpts, err := w.TxMgr.GetNoSendTxOpts()
-	if err != nil {
-		w.logger.Errorf("Error getting tx opts")
-		return nil, err
-	}
-	tx, err := w.AvsContractBindings.TaskManager.RaiseAndResolveChallenge(txOpts, task, taskResponse, taskResponseMetadata, pubkeysOfNonSigningOperators)
-	if err != nil {
-		w.logger.Errorf("Error assembling RaiseChallenge tx")
-		return nil, err
-	}
-	receipt, err := w.TxMgr.Send(ctx, tx)
-	if err != nil {
-		w.logger.Errorf("Error submitting CreateNewTask tx")
-		return nil, err
-	}
-	return receipt, nil
+	// txOpts, err := w.TxMgr.GetNoSendTxOpts()
+	// if err != nil {
+	// 	w.logger.Errorf("Error getting tx opts")
+	// 	return nil, err
+	// }
+	// tx, err := w.AvsContractBindings.TaskManager.RaiseAndResolveChallenge(txOpts, task, taskResponse, taskResponseMetadata, pubkeysOfNonSigningOperators)
+	// if err != nil {
+	// 	w.logger.Errorf("Error assembling RaiseChallenge tx")
+	// 	return nil, err
+	// }
+	// receipt, err := w.TxMgr.Send(ctx, tx)
+	// if err != nil {
+	// 	w.logger.Errorf("Error submitting CreateNewTask tx")
+	// 	return nil, err
+	// }
+	// return receipt, nil
+	return nil, nil
 }
