@@ -118,3 +118,6 @@ require (
 
 // use this when making changes to eigensdk locally
 // replace github.com/Layr-Labs/eigensdk-go => ../eigensdk-go
+
+replace github.com/Layr-Labs/incredible-squaring-avs => ../incredible-squaring-avs
+

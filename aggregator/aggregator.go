@@ -19,7 +19,7 @@ import (
 	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
 	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
+	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/NotaryTaskManager"
 )
 
 const (

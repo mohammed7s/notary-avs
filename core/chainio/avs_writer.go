@@ -12,7 +12,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
+	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/NotaryTaskManager"
 	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
 )
 
