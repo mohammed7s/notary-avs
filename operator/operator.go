@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/Layr-Labs/incredible-squaring-avs/aggregator"
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
+	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/NotaryTaskManager"
 	"github.com/Layr-Labs/incredible-squaring-avs/core"
 	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
 	"github.com/Layr-Labs/incredible-squaring-avs/metrics"
@@ -57,7 +57,7 @@ type Operator struct {
 	operatorId       bls.OperatorId
 	operatorAddr     common.Address
 	// receive new tasks in this chan (typically from listening to onchain event)
-	newTaskCreatedChan chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
+	newTaskCreatedChan chan *cstaskmanager.ContractNotaryTaskManagerNewTaskCreated
 	// ip address of aggregator
 	aggregatorServerIpPortAddr string
 	// rpc client to send signed task responses to aggregator
@@ -214,7 +214,7 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		operatorAddr:                       common.HexToAddress(c.OperatorAddress),
 		aggregatorServerIpPortAddr:         c.AggregatorServerIpPortAddress,
 		aggregatorRpcClient:                aggregatorRpcClient,
-		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated),
+		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractNotaryTaskManagerNewTaskCreated),
 		credibleSquaringServiceManagerAddr: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		operatorId:                         [32]byte{0}, // this is set below
 
@@ -303,7 +303,7 @@ func (o *Operator) Start(ctx context.Context) error {
 
 // Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
 // The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
-func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated) *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse {
+func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractNotaryTaskManagerNewTaskCreated) *cstaskmanager.INotaryTaskManagerTaskResponse {
 	o.logger.Debug("Received new task", "task", newTaskCreatedLog)
 	o.logger.Info("Received new task",
 		"numberToBeSquared", newTaskCreatedLog.Task.NumberToBeSquared,
@@ -313,14 +313,14 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 	numberSquared := big.NewInt(0).Exp(newTaskCreatedLog.Task.NumberToBeSquared, big.NewInt(2), nil)
-	taskResponse := &cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
+	taskResponse := &cstaskmanager.INotaryTaskManagerTaskResponse{
 		ReferenceTaskIndex: newTaskCreatedLog.TaskIndex,
 		NumberSquared:      numberSquared,
 	}
 	return taskResponse
 }
 
-func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) (*aggregator.SignedTaskResponse, error) {
+func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.INotaryTaskManagerTaskResponse) (*aggregator.SignedTaskResponse, error) {
 	taskResponseHash, err := core.GetTaskResponseDigest(taskResponse)
 	if err != nil {
 		o.logger.Error("Error getting task response header hash. skipping task (this is not expected and should be investigated)", "err", err)
